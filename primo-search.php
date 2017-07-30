@@ -18,37 +18,69 @@ function PrimoSearch($primo_scope, $primo_tab, $query, $limit,$campus,$alma,$cou
 		$weblimits =''; //For the browser
 	}
 	
-	$url = 'https://'.$campus.'-primo.hosted.exlibrisgroup.com/PrimoWebServices/xservice/search/brief?onCampus=false&institution='.$alma.'&highlight=false&dym=true&indx=1&loc=adaptor,primo_central_multiple_fe&local,scope:'.$primo_scope.'&query=any,contains,'.$query.''.$limits.'&bulkSize='.$count.'&json=true';
+	//$url = 'https://'.$campus.'-primo.hosted.exlibrisgroup.com/PrimoWebServices/xservice/search/brief?onCampus=false&institution='.$alma.'&highlight=false&dym=true&indx=1&loc=adaptor,primo_central_multiple_fe&local,scope:('.$primo_scope.')&query=any,contains,'.$query.''.$limits.'&bulkSize='.$count.'&json=true';
+	$url = 'https://'.$campus.'-primo.hosted.exlibrisgroup.com/PrimoWebServices/xservice/search/brief?onCampus=false&institution='.$alma.'&highlight=false&dym=true&indx=1&loc=local,scope:('.$alma.')&loc=adaptor,primo_central_multiple_fe&query=any,contains,'.$query.''.$limits.'&bulkSize='.$count.'&json=true';
 	$json = file_get_contents($url);
 	$data = json_decode($json,true);
-	echo '<div><ol>';
-	$totalcount = $data['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['@TOTALHITS']; //Get total results. This doesn't match for searches which include Alma data - maybe due to indexing
-	$bibrecords = $data['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['DOC']; //This section of the JSON contains the records
-	foreach($bibrecords as $bibrecord){ //for each bib record in the search results do the following
-	   $recordidraw = $bibrecord['PrimoNMBib']['record']['control']['recordid']; //get the record ID so that we can send users to the record
+	
+	echo '<div class="itemresults">';
+		$totalcount = $data['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['@TOTALHITS']; //Get total results. This doesn't match for searches which include Alma data - maybe due to indexing
+		$arraytest = $data['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['DOC']['PrimoNMBib']; //testing whether results are in an array, or not
+		$bibrecords = $data['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['DOC']; //This section of the JSON contains the records
+	
+	if(is_array($arraytest)) { //If one result
+	   $recordidraw = $bibrecords['PrimoNMBib']['record']['control']['recordid']; //get the record ID so that we can send users to the record
 	   $recordid = is_array($recordidraw) ? $recordidraw[0] : $recordidraw; //Is there more than one? Get the first one[0] or the only one
-	   $type = $bibrecord['PrimoNMBib']['record']['display']['type']; // Get the type from JSON
-	   $titleraw = $bibrecord['PrimoNMBib']['record']['display']['title']; // Get the title from JSON
+	   $type = $bibrecords['PrimoNMBib']['record']['display']['type']; // Get the type from JSON
+	   $titleraw = $bibrecords['PrimoNMBib']['record']['display']['title']; // Get the title from JSON
 	   $title = is_array($titleraw) ? $titleraw[0] : $titleraw; // Is there more than one title in an array? If so choose the first title[0], if not get the only title
-	   $source = $bibrecord['PrimoNMBib']['record']['display']['ispartof']; // Get the source (journals) from JSON
-	   $creationdate = $bibrecord['PrimoNMBib']['record']['display']['creationdate']; // Get the creation date (books) source from JSON
+	   $source = $bibrecords['PrimoNMBib']['record']['display']['ispartof']; // Get the source (journals) from JSON
+	   $creationdate = $bibrecords['PrimoNMBib']['record']['display']['creationdate']; // Get the creation date (books) source from JSON
 	   //$creationdate = (strlen($creationdateraw) == 4 ? $creationdateraw : substr($creationdateraw, -4)); // If creation date has more than four characters get the last four characters containing the year
-	   $description = $bibrecord['PrimoNMBib']['record']['display']['description']; // Get the description from JSON
-	   echo '<li>'.$type.': <a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context=PC&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor=primo_central_multiple_fe&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a>';
-	   echo '<br />'.$source.' '.$creationdate;
+	   $description = $bibrecords['PrimoNMBib']['record']['display']['description']; // Get the description from JSON
+	    echo '<div class="itemrow">';
+		$typeimage = '/home/www/drupal/sites/all/themes/riley/img/bento/'.$type.'.png';
+		if (file_exists($typeimage))
+		echo '<img src="/sites/all/themes/riley/img/bento/'.$type.'.png" alt="'.$type.'" /> ';
+		echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context=PC&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor=primo_central_multiple_fe&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
+	   echo ''.$source.' '.$creationdate;
 	   //echo '<br />'.$description.'; // Description hidden
-	   echo '</li>';
+	   echo '</div>';
 	}
-	echo '</ol>';
-	echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,'.$query.',AND'.$weblimits.'&tab='.$primo_tab.'&search_scope='.$primo_scope.'&sortby=rank&vid='.$alma.'&lang=en_US&mode=advanced&offset=0">See All <strong>'.$totalcount.' ';
+	 else { //If an array of results
+		 foreach($bibrecords as $bibrecord){ //for each bib record in the search results do the following
+		   $recordidraw = $bibrecord['PrimoNMBib']['record']['control']['recordid']; //get the record ID so that we can send users to the record
+		   $recordid = is_array($recordidraw) ? $recordidraw[0] : $recordidraw; //Is there more than one? Get the first one[0] or the only one
+		   $type = $bibrecord['PrimoNMBib']['record']['display']['type']; // Get the type from JSON
+		   $titleraw = $bibrecord['PrimoNMBib']['record']['display']['title']; // Get the title from JSON
+		   $title = is_array($titleraw) ? $titleraw[0] : $titleraw; // Is there more than one title in an array? If so choose the first title[0], if not get the only title
+		   $source = $bibrecord['PrimoNMBib']['record']['display']['ispartof']; // Get the source (journals) from JSON
+		   $creationdate = $bibrecord['PrimoNMBib']['record']['display']['creationdate']; // Get the creation date (books) source from JSON
+		   //$creationdate = (strlen($creationdateraw) == 4 ? $creationdateraw : substr($creationdateraw, -4)); // If creation date has more than four characters get the last four characters containing the year
+		   $description = $bibrecord['PrimoNMBib']['record']['display']['description']; // Get the description from JSON
+		   echo '<div class="itemrow">';
+			$typeimage = '/home/www/drupal/sites/all/themes/riley/img/bento/'.$type.'.png';
+			if (file_exists($typeimage))
+			echo '<img src="/sites/all/themes/riley/img/bento/'.$type.'.png" alt="'.$type.'" /> ';
+			else
+			echo '['.$type.'] ';
+			echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context=PC&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor=primo_central_multiple_fe&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
+	   		echo ''.$source.' '.$creationdate;
+	   //echo '<br />'.$description.'; // Description hidden
+	   		echo '</div>';
+		}
+	 }	if($totalcount =='0')
+	echo '<div class="itemrow"><em>No Results Found</em>. <a href="https://sdsu-primo.hosted.exlibrisgroup.com/primo-explore/search?vid=01CALS_SDL&sortby=rank&lang=en_US&mode=advanced">Try Another OneSearch</a>.</div>';
+	echo '<div class="itemrow"><a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,'.$query.',AND'.$weblimits.'&tab='.$primo_tab.'&search_scope='.$primo_scope.'&sortby=rank&vid='.$alma.'&lang=en_US&mode=advanced&offset=0" class="btn btn-primary color-2">See All '.number_format($totalcount).' ';
 		if($limit == '')
 			echo 'Results';
 		elseif($limit == 'reference_entrys') //Fixed spelling
-			echo 'Reference Entries';
+			echo 'Definitions';
 		else
 			echo ucwords(str_replace('_', ' ', $limit)); //replace _ with a space, then uppercase words
-	echo '</strong></a></div>';
-	echo '<br />JSON from API: <a href="'.$url.'" target="_new">'.$url.'</a>'; //show JSON URL for debugging
+	echo '</a></div>';
+	echo '</div>';
+	// JSON URL for debugging echo '<br />'.$url; 
 }
 echo '<title>Primo Results for '.$queryfiltered.'</title>';
 ?>
