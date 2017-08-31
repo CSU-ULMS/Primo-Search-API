@@ -31,6 +31,15 @@ function PrimoSearch($primo_scope, $primo_tab, $query, $limit,$campus,$alma,$cou
 	if(is_array($arraytest)) { //If one result
 	   $recordidraw = $bibrecords['PrimoNMBib']['record']['control']['recordid']; //get the record ID so that we can send users to the record
 	   $recordid = is_array($recordidraw) ? $recordidraw[0] : $recordidraw; //Is there more than one? Get the first one[0] or the only one
+	   if(strpos($recordid, 'ALMA') !== false) //is the record coming from ALMA? If so, use the local adaptor and context
+	   {
+	  	 $adaptor='Local%20Search%20Engine';
+		 $context = 'L';
+	   }
+	   else {
+	   $adaptor = 'primo_central_multiple_fe';
+	   $context = 'PC';
+	   }
 	   $type = $bibrecords['PrimoNMBib']['record']['display']['type']; // Get the type from JSON
 	   $titleraw = $bibrecords['PrimoNMBib']['record']['display']['title']; // Get the title from JSON
 	   $title = is_array($titleraw) ? $titleraw[0] : $titleraw; // Is there more than one title in an array? If so choose the first title[0], if not get the only title
@@ -42,7 +51,7 @@ function PrimoSearch($primo_scope, $primo_tab, $query, $limit,$campus,$alma,$cou
 		$typeimage = '/home/www/drupal/sites/all/themes/riley/img/bento/'.$type.'.png';
 		if (file_exists($typeimage))
 		echo '<img src="/sites/all/themes/riley/img/bento/'.$type.'.png" alt="'.$type.'" /> ';
-		echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context=PC&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor=primo_central_multiple_fe&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
+		echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context='.$context.'&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor='.$adaptor.'&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
 	   echo ''.$source.' '.$creationdate;
 	   //echo '<br />'.$description.'; // Description hidden
 	   echo '</div>';
@@ -51,6 +60,15 @@ function PrimoSearch($primo_scope, $primo_tab, $query, $limit,$campus,$alma,$cou
 		 foreach($bibrecords as $bibrecord){ //for each bib record in the search results do the following
 		   $recordidraw = $bibrecord['PrimoNMBib']['record']['control']['recordid']; //get the record ID so that we can send users to the record
 		   $recordid = is_array($recordidraw) ? $recordidraw[0] : $recordidraw; //Is there more than one? Get the first one[0] or the only one
+	   	   if(strpos($recordid, 'ALMA') !== false) //is the record coming from ALMA? If so, use the local adaptor and context
+	   	   {
+	  	   $adaptor='Local%20Search%20Engine';
+		   $context = 'L';
+	       }
+	       else {
+	       $adaptor = 'primo_central_multiple_fe';
+	       $context = 'PC';
+	       }
 		   $type = $bibrecord['PrimoNMBib']['record']['display']['type']; // Get the type from JSON
 		   $titleraw = $bibrecord['PrimoNMBib']['record']['display']['title']; // Get the title from JSON
 		   $title = is_array($titleraw) ? $titleraw[0] : $titleraw; // Is there more than one title in an array? If so choose the first title[0], if not get the only title
@@ -64,7 +82,7 @@ function PrimoSearch($primo_scope, $primo_tab, $query, $limit,$campus,$alma,$cou
 			echo '<img src="/sites/all/themes/riley/img/bento/'.$type.'.png" alt="'.$type.'" /> ';
 			else
 			echo '['.$type.'] ';
-			echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context=PC&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor=primo_central_multiple_fe&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
+			echo '<a href="https://'.$campus.'-primo.hosted.exlibrisgroup.com/primo-explore/fulldisplay?docid='.$recordid.'&context='.$context.'&vid='.$alma.'&lang=en_US&search_scope='.$primo_scope.'&adaptor='.$adaptor.'&tab='.$primo_tab.'&query=any,contains,'.$query.'&sortby=rank&offset=0">'.$title.'</a> ';
 	   		echo ''.$source.' '.$creationdate;
 	   //echo '<br />'.$description.'; // Description hidden
 	   		echo '</div>';
